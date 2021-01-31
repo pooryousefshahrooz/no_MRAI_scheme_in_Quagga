@@ -1,1 +1,1 @@
-# no_MRAI_scheme_in_Quagga
+# This project is about removing MRAI timer and all unnecessary timers from Quagga routing software.
