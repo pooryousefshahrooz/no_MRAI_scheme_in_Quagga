@@ -305,8 +305,12 @@ bgp_routeadv_timer (struct thread *thread)
 
   BGP_WRITE_ON (peer->t_write, bgp_write, peer->fd);
 
-  BGP_TIMER_ON (peer->t_routeadv, bgp_routeadv_timer,
-		peer->v_routeadv);
+  /* no MRAI comment: we change BGP_TIMER_ON function to BGP_TIMER_MSEC_ON function in order to
+   set the timer in milliseconds time granularity instead of seconds. */
+  // BGP_TIMER_ON (peer->t_routeadv, bgp_routeadv_timer,
+		// peer->v_routeadv);
+  BGP_TIMER_MSEC_ON (peer->t_routeadv, bgp_routeadv_timer,
+    peer->v_routeadv);
 
   return 0;
 }
@@ -957,8 +961,11 @@ bgp_establish (struct peer *peer)
 	  SET_FLAG (peer->af_sflags[afi][safi], PEER_STATUS_ORF_WAIT_REFRESH);
 
   bgp_announce_route_all (peer);
-
-  BGP_TIMER_ON (peer->t_routeadv, bgp_routeadv_timer, 1);
+  /* no MRAI comment: we start the timer in milliseconds granularity 
+  by calling BGP_TIMER_MSEC_ON for the first time */
+  //BGP_TIMER_ON (peer->t_routeadv, bgp_routeadv_timer, 1);
+  BGP_TIMER_MSEC_ON (peer->t_routeadv, bgp_routeadv_timer,
+    1);
 
   return 0;
 }

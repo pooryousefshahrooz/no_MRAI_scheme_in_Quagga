@@ -52,7 +52,12 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
     if (!(T) && (peer->status != Deleted))	\
       THREAD_TIMER_ON(bm->master,(T),(F),peer,(V)); \
   } while (0)
-
+  /* no MRAI comment: used in bgp_fsm for changing the time granularity */
+#define BGP_TIMER_MSEC_ON(T,F,V)     \
+  do {            \
+    if (!(T) && (peer->status != Deleted))  \
+      THREAD_TIMER_MSEC_ON(bm->master,(T),(F),peer,(V)); \
+  } while (0)
 #define BGP_TIMER_OFF(T)			\
   do {						\
     if (T)					\
