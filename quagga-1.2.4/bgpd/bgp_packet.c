@@ -634,7 +634,11 @@ bgp_write_packet (struct peer *peer)
 	adv = BGP_ADV_FIFO_HEAD (&peer->sync[afi][safi]->update);
 	if (adv)
 	  {
-            if (adv->binfo && adv->binfo->uptime < peer->synctime)
+            /*
+              no MRAI comment: we change < to <= inorder to avoid one second delay in announcing update messages
+            */
+            // if (adv->binfo && adv->binfo->uptime < peer->synctime)
+               if (adv->binfo && adv->binfo->uptime <= peer->synctime)
 	      {
 		if (CHECK_FLAG (adv->binfo->peer->cap, PEER_CAP_RESTART_RCV)
 		    && CHECK_FLAG (adv->binfo->peer->cap, PEER_CAP_RESTART_ADV)

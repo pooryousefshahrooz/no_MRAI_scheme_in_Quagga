@@ -1693,12 +1693,19 @@ bgp_process_queue_init (void)
   bm->process_main_queue->spec.workfunc = &bgp_process_main;
   bm->process_main_queue->spec.del_item_data = &bgp_processq_del;
   bm->process_main_queue->spec.max_retries = 0;
-  bm->process_main_queue->spec.hold = 50;
+  /*no MRAI comment: spec.hold timer is the amount of time that needs to pass untile 
+  the bgp_process_main function be called to apply export policies to the received rotue 
+  the default value is 50 milliseconds. We set it to zero. This does not affect the logic of BGP or Quagga.
+  */
+  // bm->process_main_queue->spec.hold = 50;
+  bm->process_main_queue->spec.hold = 0;
   
   bm->process_rsclient_queue->spec.workfunc = &bgp_process_rsclient;
   bm->process_rsclient_queue->spec.del_item_data = &bgp_processq_del;
   bm->process_rsclient_queue->spec.max_retries = 0;
-  bm->process_rsclient_queue->spec.hold = 50;
+  /* no MRAI comment: we set the spec.hold timer from 50 milliseconds to zero for the origin routes. */
+  //bm->process_rsclient_queue->spec.hold = 50;
+  bm->process_rsclient_queue->spec.hold = 0;
 }
 
 void
