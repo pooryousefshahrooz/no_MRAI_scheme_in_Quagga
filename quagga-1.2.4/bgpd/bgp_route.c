@@ -1463,6 +1463,25 @@ static int
 bgp_process_announce_selected (struct peer *peer, struct bgp_info *selected,
                                struct bgp_node *rn, afi_t afi, safi_t safi)
 {
+
+  /*
+  no MRAI comment: we delay route processing for ROUTE_PROCESSING_DELAY-4 microseconds. 
+  4 microseconds is the default processing delay. 
+  */
+  if (ROUTE_PROCESSING_DELAY >4)
+  {
+  struct timeval timevals[4];
+  int cur = 0;
+  gettimeofday(&timevals[cur], NULL);
+  gettimeofday(&timevals[!cur], NULL);
+  int critical_microseconds = 0;
+  while(((timevals[!cur].tv_usec-timevals[cur].tv_usec) <= (ROUTE_PROCESSING_DELAY-4)) && (critical_microseconds==0))
+    {
+      gettimeofday(&timevals[!cur], NULL);
+      if (timevals[!cur].tv_usec-timevals[cur].tv_usec< 0)
+        critical_microseconds = 1;
+    }
+  }
   struct prefix *p;
   struct attr attr;
   struct attr_extra extra;

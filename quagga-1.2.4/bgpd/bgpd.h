@@ -760,6 +760,9 @@ struct bgp_nlri
 #define BGP_DEFAULT_IBGP_ROUTEADV                1
 #define BGP_DEFAULT_CONNECT_RETRY                5
 
+/* Route processing delay value */
+#define ROUTE_PROCESSING_DELAY                4
+
 /* BGP default local preference.  */
 #define BGP_DEFAULT_LOCAL_PREF                 100
 
