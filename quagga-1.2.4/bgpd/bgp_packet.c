@@ -780,7 +780,6 @@ bgp_write (struct thread *thread)
 	  peer->open_out++;
 	  break;
 	case BGP_MSG_UPDATE:
-    written_update_message_counter++;
 	  peer->update_out++;
 	  break;
 	case BGP_MSG_NOTIFY:
@@ -804,6 +803,7 @@ bgp_write (struct thread *thread)
 
       /* OK we send packet so delete it. */
       bgp_packet_delete (peer);
+      written_update_message_counter++;
     }
   while (++count < BGP_WRITE_PACKET_MAX &&
 	 (s = bgp_write_packet (peer)) != NULL);
