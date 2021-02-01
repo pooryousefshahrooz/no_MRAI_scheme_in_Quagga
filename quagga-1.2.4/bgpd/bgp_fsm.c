@@ -468,7 +468,7 @@ bgp_stop (struct peer *peer)
 
       /* bgp log-neighbor-changes of neighbor Down */
       if (bgp_flag_check (peer->bgp, BGP_FLAG_LOG_NEIGHBOR_CHANGES))
-	zlog_info ("%%ADJCHANGE: neighbor %s Down %s", peer->host,
+	zlog_info ("%%ADJCHANGE: neighbor %ld Down %s", peer->as,
                    peer_down_str [(int) peer->last_reset]);
 
       /* graceful restart */
@@ -883,7 +883,7 @@ bgp_establish (struct peer *peer)
 
   /* bgp log-neighbor-changes of neighbor Up */
   if (bgp_flag_check (peer->bgp, BGP_FLAG_LOG_NEIGHBOR_CHANGES))
-    zlog_info ("%%ADJCHANGE: neighbor %s Up", peer->host);
+    zlog_info ("%%ADJCHANGE: neighbor %ld Up", peer->as);
 
   /* graceful restart */
   UNSET_FLAG (peer->sflags, PEER_STATUS_NSF_WAIT);

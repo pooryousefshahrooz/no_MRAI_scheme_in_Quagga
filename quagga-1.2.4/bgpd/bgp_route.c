@@ -3270,6 +3270,9 @@ int
 bgp_nlri_parse_ip (struct peer *peer, struct attr *attr,
                    struct bgp_nlri *packet)
 {
+  /* no MRAI comment: variables used to count how many prefixes are in the received update/withdraw messages */
+  int prefix_receiver_counter = 0;
+  int prefix_in_withdraw_receiver_counter = 0;
   u_char *pnt;
   u_char *lim;
   struct prefix p;
@@ -3378,11 +3381,19 @@ bgp_nlri_parse_ip (struct peer *peer, struct attr *attr,
 
       /* Normal process. */
       if (attr)
-	ret = bgp_update (peer, &p, attr, packet->afi, packet->safi, 
-			  ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL, 0);
+      {
+        /* no MRAI comment: add one to received prefixes in the update message */
+        prefix_receiver_counter = prefix_receiver_counter +1;
+        ret = bgp_update (peer, &p, attr, packet->afi, packet->safi, 
+        ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL, 0);
+      }
       else
-	ret = bgp_withdraw (peer, &p, attr, packet->afi, packet->safi, 
-			    ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL);
+      {
+        /* no MRAI comment: add one to received prefixes in the withdraw message */
+        prefix_in_withdraw_receiver_counter = prefix_in_withdraw_receiver_counter +1;
+        ret = bgp_withdraw (peer, &p, attr, packet->afi, packet->safi, 
+        ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL);
+      }
 
       /* Address family configuration mismatch or maximum-prefix count
          overflow. */
@@ -3399,7 +3410,8 @@ bgp_nlri_parse_ip (struct peer *peer, struct attr *attr,
                 peer->host);
       return -1;
     }
-  
+  /* no MRAI: logging receiving update/withdraw message */
+  zlog_debug ("we finished receiving %ld prefixes in update and %ld prefixes in withdraw message from %ld",prefix_receiver_counter,prefix_in_withdraw_receiver_counter,peer->as);
   return 0;
 }
 

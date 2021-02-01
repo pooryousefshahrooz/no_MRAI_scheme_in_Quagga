@@ -144,6 +144,9 @@ bgp_connect_check (struct peer *peer)
 static struct stream *
 bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
 {
+  /* no MRAI comment: logging the moment we start building the update message */
+  zlog_debug ("we are sending message to %ld" ,peer->as);
+  int number_of_sent_prefix_counter = 0;
   struct stream *s;
   struct stream *snlri;
   struct bgp_adj_out *adj;
@@ -258,6 +261,7 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
 						    adv->baa->attr);
 	  bgp_packet_mpattr_prefix(snlri, afi, safi, &rn->p, prd, tag);
 	}
+      number_of_sent_prefix_counter = number_of_sent_prefix_counter +1;
       if (BGP_DEBUG (update, UPDATE_OUT))
         {
           char buf[INET6_BUFSIZ];
@@ -299,6 +303,8 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
       BGP_WRITE_ON (peer->t_write, bgp_write, peer->fd);
       stream_reset (s);
       stream_reset (snlri);
+      /* no MRAI comment: logging the moment we finished building the update message */
+      zlog_debug ("we finished building the update message including %ld prefixes to %ld" ,number_of_sent_prefix_counter,peer->as);
       return packet;
     }
   return NULL;
@@ -357,6 +363,9 @@ bgp_update_packet_eor (struct peer *peer, afi_t afi, safi_t safi)
 static struct stream *
 bgp_withdraw_packet (struct peer *peer, afi_t afi, safi_t safi)
 {
+  /* no MRAI comment: logging sending a withdraw update message and counting the number of prefixes in it */
+  zlog_debug ("we are sending withdraw message to %ld" ,peer->as);
+  int sent_prefix_in_withdraw_counter = 0;
   struct stream *s;
   struct stream *packet;
   struct bgp_adj_out *adj;
@@ -417,7 +426,8 @@ bgp_withdraw_packet (struct peer *peer, afi_t afi, safi_t safi)
 
 	  bgp_packet_mpunreach_prefix(s, &rn->p, afi, safi, prd, NULL);
 	}
-
+     /* no MRAI comment: add one to the number of prefixes in withdraw message */
+      sent_prefix_in_withdraw_counter = sent_prefix_in_withdraw_counter +1;
       if (BGP_DEBUG (update, UPDATE_OUT))
         {
           char buf[INET6_BUFSIZ];
@@ -456,6 +466,8 @@ bgp_withdraw_packet (struct peer *peer, afi_t afi, safi_t safi)
       packet = stream_dup (s);
       bgp_packet_add (peer, packet);
       stream_reset (s);
+      /* no MRAI comment: logging how many prefixes we added to the withdraw message */
+      zlog_debug ("we finished building the withdraw message with %ld prefixes be sent to %ld" ,sent_prefix_in_withdraw_counter,peer->as);
       return packet;
     }
 
@@ -706,6 +718,8 @@ bgp_write_proceed (struct peer *peer)
 int
 bgp_write (struct thread *thread)
 {
+  /* no MRAI comment: count how many update message we wrote on the socket */
+  int written_update_message_counter;
   struct peer *peer;
   u_char type;
   struct stream *s; 
@@ -766,6 +780,7 @@ bgp_write (struct thread *thread)
 	  peer->open_out++;
 	  break;
 	case BGP_MSG_UPDATE:
+    written_update_message_counter++;
 	  peer->update_out++;
 	  break;
 	case BGP_MSG_NOTIFY:
@@ -795,7 +810,12 @@ bgp_write (struct thread *thread)
   
   if (bgp_write_proceed (peer))
     BGP_WRITE_ON (peer->t_write, bgp_write, peer->fd);
-
+  /* no MRAI comment : we check if the written message was an update and we log the number of written update messages */
+  switch (type)
+  {
+  case BGP_MSG_UPDATE:
+    zlog_debug ("*******...we wrote %ld update messages to socket for %ld",written_update_message_counter,peer->as);
+  }
  done:
   sockopt_cork (peer->fd, 0);
   return 0;
@@ -1871,8 +1891,12 @@ bgp_update_receive (struct peer *peer, bgp_size_t size)
               peer->host);
 
       if (ret)
-	zlog (peer->log, lvl, "%s rcvd UPDATE w/ attr: %s",
-	      peer->host, attrstr);
+      {
+        /* no MRAI comment: logging the ASPATH and next hop of the received update message */
+        zlog_debug ("we start parsing update message received from %ld",peer->as);
+        zlog_debug (peer->log, lvl, "%s rcvd UPDATE w/ attr: %s from %ld",
+        peer->host, attrstr,peer->as);
+      }
     }
   
   /* Network Layer Reachability Information. */
