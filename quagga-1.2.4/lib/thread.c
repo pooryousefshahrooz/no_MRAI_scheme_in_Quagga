@@ -1196,16 +1196,23 @@ thread_fetch (struct thread_master *m)
           zlog_warn ("select() error: %s", safe_strerror (errno));
           return NULL;
         }
-
-      /* Check foreground timers.  Historically, they have had higher
-         priority than I/O threads, so let's push them onto the ready
-	 list in front of the I/O threads. */
-      quagga_get_relative (NULL);
-      thread_timer_process (m->timer, &relative_time);
-      
+        /* NMRAI comment: we consider the I/O threads as the highest priority threads */
       /* Got IO, process it */
       if (num > 0)
         thread_process_fds (m, &readfd, &writefd, num);
+
+
+      /* NMRAI comment: Background timer/events, lowest priority in the default version, but we set them as second highest priority threads */
+      thread_timer_process (m->background, &relative_time);
+
+      /* Check foreground timers.  Historically, they have had higher
+         priority than I/O threads, in the default version, we push them onto the ready
+	 list in front of the I/O threads. but in this version of NMRAI we put them at the end*/
+
+      quagga_get_relative (NULL);
+      thread_timer_process (m->timer, &relative_time);
+      
+
 
 #if 0
       /* If any threads were made ready above (I/O or foreground timer),
@@ -1216,8 +1223,7 @@ thread_fetch (struct thread_master *m)
         return thread;
 #endif
 
-      /* Background timer/events, lowest priority */
-      thread_timer_process (m->background, &relative_time);
+
       
       if ((thread = thread_trim_head (&m->ready)) != NULL)
         return thread;
@@ -1251,7 +1257,10 @@ thread_should_yield (struct thread *thread)
 {
   quagga_get_relative (NULL);
   unsigned long t = timeval_elapsed(relative_time, thread->real);
-  return ((t > THREAD_YIELD_TIME_SLOT) ? t : 0);
+  /* NMRAI comment: we prevent rescheduling by returning zero always */
+   return 0;
+  // return ((t > THREAD_YIELD_TIME_SLOT) ? t : 0);
+
 }
 
 void
